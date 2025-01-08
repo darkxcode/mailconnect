@@ -44,3 +44,8 @@ databases:
   - name: mail_connect_db
     databaseName: mail_connect_db
     user: mail_connect_db_user 
+
+build:
+  steps:
+    - name: Create logs directory
+      command: mkdir -p logs 
