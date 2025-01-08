@@ -3,6 +3,7 @@ services:
     name: mailconnect
     env: python
     buildCommand: |
+      mkdir -p logs && chmod 777 logs
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
