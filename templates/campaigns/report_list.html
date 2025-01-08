@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Campaign Reports</h1>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Campaign</th>
+                            <th>Status</th>
+                            <th>Sent</th>
+                            <th>Opened</th>
+                            <th>Clicked</th>
+                            <th>Replied</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                        <tr>
+                            <td>{{ campaign.name }}</td>
+                            <td>
+                                <span class="badge bg-{{ campaign.status_color }}">
+                                    {{ campaign.status }}
+                                </span>
+                            </td>
+                            <td>{{ campaign.analytics.total_sent }}</td>
+                            <td>{{ campaign.analytics.total_opened }}</td>
+                            <td>{{ campaign.analytics.total_clicked }}</td>
+                            <td>{{ campaign.analytics.total_replied }}</td>
+                            <td>
+                                <a href="{% url 'campaign_report' campaign.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No campaign reports available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

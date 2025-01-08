@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create Campaign</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_name">Campaign Name:</label>
+            {{ form.name }}
+        </div>
+        <div class="form-group">
+            <label for="id_subject">Email Subject:</label>
+            {{ form.subject }}
+        </div>
+        <div class="form-group">
+            <label for="id_body">Email Body:</label>
+            {{ form.body }}
+        </div>
+        <div class="form-group">
+            <label for="id_smtp_settings">SMTP Settings:</label>
+            {{ form.smtp_settings }}
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Create Campaign</button>
+    </form>
+</div>
+{% endblock %}

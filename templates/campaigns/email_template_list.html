@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Email Templates</h1>
+    <a href="{% url 'email_template_create' %}" class="btn btn-primary mb-3">Create New Template</a>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for template in email_templates %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ template.name }}</h5>
+                    <p class="card-text">Subject: {{ template.subject }}</p>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'email_template_update' template.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'email_template_delete' template.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No email templates found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

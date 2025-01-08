@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Campaign Analytics: {{ campaign.name }}</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Summary</h5>
+                    <p>Total Sent: {{ analytics.count }}</p>
+                    <p>Opened: {{ analytics.filter(opened_at__isnull=False).count }}</p>
+                    <p>Clicked: {{ analytics.filter(clicked_at__isnull=False).count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Sent</th>
+                        <th>Opened</th>
+                        <th>Clicked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in analytics %}
+                    <tr>
+                        <td>{{ contact.contact.email }}</td>
+                        <td>{{ contact.sent_at|default_if_none:"-" }}</td>
+                        <td>{{ contact.opened_at|default_if_none:"-" }}</td>
+                        <td>{{ contact.clicked_at|default_if_none:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

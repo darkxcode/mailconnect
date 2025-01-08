@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">CRM Integration Settings</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="provider" class="form-label">CRM Provider</label>
+                            <select name="provider" id="provider" class="form-select">
+                                <option value="twenty" {% if integration.provider == 'twenty' %}selected{% endif %}>Twenty CRM</option>
+                                <option value="other" {% if integration.provider == 'other' %}selected{% endif %}>Other CRM</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="api_key" class="form-label">API Key</label>
+                            <input type="password" name="api_key" id="api_key" class="form-control" 
+                                   value="{{ integration.api_key|default:'' }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                        {% if integration %}
+                            <a href="{% url 'sync_crm_contacts' %}" class="btn btn-success ms-2">Sync Contacts</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Sync History</h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for log in sync_logs %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ log.sync_type|title }}</h6>
+                                        <small class="text-muted">{{ log.created_at|date:"M d, Y H:i" }}</small>
+                                    </div>
+                                    <span class="badge bg-{{ log.status|yesno:'success,danger' }}">
+                                        {{ log.status|title }}
+                                    </span>
+                                </div>
+                                {% if log.message %}
+                                    <small class="text-muted d-block mt-1">{{ log.message }}</small>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-muted m-3">No sync history available</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

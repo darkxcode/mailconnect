@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Campaign{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Delete Campaign</h1>
+    <p>Are you sure you want to delete the campaign "{{ object.title }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'campaign_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

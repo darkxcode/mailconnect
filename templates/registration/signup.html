@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - MailConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="bg-light">
+    <div class="min-vh-100 d-flex flex-column align-items-center px-4 py-8">
+        <!-- Logo -->
+        <div class="mb-4">
+            <img src="{% static 'images/logo.png' %}" alt="MailConnect" width="140" height="32">
+        </div>
+
+        <!-- Signup Card -->
+        <div class="card w-100" style="max-width: 400px;">
+            <div class="card-body">
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="h4 fw-semibold text-gray-900">Create a new account</h1>
+                    </div>
+
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="space-y-2">
+                            <label for="first_name" class="form-label">First name</label>
+                            <input 
+                                type="text" 
+                                name="first_name" 
+                                id="first_name" 
+                                class="form-control" 
+                                placeholder="E.g. Nemo" 
+                                required
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="company" class="form-label">Company name</label>
+                            <input 
+                                type="text" 
+                                name="company" 
+                                id="company" 
+                                class="form-control" 
+                                placeholder="E.g. MailConnect" 
+                                required
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="email" class="form-label">Your email (this will be your login)</label>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                id="email" 
+                                class="form-control" 
+                                placeholder="nemo@mailconnect.com" 
+                                required
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="position-relative">
+                                <input 
+                                    type="password" 
+                                    name="password" 
+                                    id="password" 
+                                    class="form-control pe-10" 
+                                    placeholder="Choose password..." 
+                                    required
+                                >
+                                <button 
+                                    type="button" 
+                                    class="password-toggle" 
+                                    id="togglePassword"
+                                >
+                                    <i class="fa-regular fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 btn-login" id="signupButton">
+                            <span class="button-text">Sign up</span>
+                            <span class="button-loader d-none">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading...
+                            </span>
+                        </button>
+
+                        <p class="text-center small text-muted">
+                            By clicking this button, you agree to the 
+                            <a href="/terms" class="text-primary text-decoration-none">Terms of service</a> 
+                            and to receive product update info
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Link -->
+        <p class="mt-4 small text-muted">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="text-decoration-none text-primary">Log in</a>
+        </p>
+    </div>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle between eye and eye-slash icons
+            passwordIcon.classList.toggle('fa-eye');
+            passwordIcon.classList.toggle('fa-eye-slash');
+        });
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const button = document.getElementById('signupButton');
+            const buttonText = button.querySelector('.button-text');
+            const buttonLoader = button.querySelector('.button-loader');
+            const startTime = Date.now();
+            
+            // Show loading state
+            buttonText.classList.add('d-none');
+            buttonLoader.classList.remove('d-none');
+            button.disabled = true;
+
+            // Get form data
+            const formData = new FormData(form);
+            
+            // Submit form data via fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                return response.json().then(data => {
+                    throw new Error(Object.values(data.errors).flat().join('\n'));
+                });
+            })
+            .then(data => {
+                if (data.success) {
+                    const remainingTime = Math.max(0, 10000 - (Date.now() - startTime));
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/';
+                    }, remainingTime);
+                }
+            })
+            .catch(error => {
+                // Reset button state
+                buttonText.classList.remove('d-none');
+                buttonLoader.classList.add('d-none');
+                button.disabled = false;
+                
+                // Show error message
+                alert(error.message || 'Signup failed. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>

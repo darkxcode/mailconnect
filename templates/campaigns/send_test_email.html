@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Test Email{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Send Test Email</h1>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.recipient.id_for_label }}" class="form-label">Recipient Email</label>
+                    {{ form.recipient }}
+                </div>
+                <button type="submit" class="btn btn-primary">Send Test Email</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

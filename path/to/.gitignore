@@ -1,0 +1,13 @@
+# Add these under the Python section
+apps/*/__pycache__/
+apps/*/*/__pycache__/
+*.pyc 
+
+# Add these under the Environment section
+myenv/
+venv/ 
+
+# Add these under the Django section
+core/__pycache__/
+apps/*/migrations/__pycache__/
+static/admin/ 

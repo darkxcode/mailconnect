@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Welcome to MailConnect!</h1>
+    <p>This is the home page of your email campaign management application.</p>
+    <a href="{% url 'campaign_list' %}">Manage Campaigns</a>
+    <a href="{% url 'smtp_settings' %}">Configure SMTP Settings</a>
+    <br>
+    <h2>User Authentication</h2>
+    <a href="{% url 'signup' %}">Sign Up</a> | 
+    <a href="{% url 'login' %}">Sign In</a>
+{% endblock %}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MailConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+</head>
+<body class="bg-light">
+    <div class="min-vh-100 d-flex flex-column align-items-center px-4 py-8">
+        <!-- Logo -->
+        <div class="mb-4">
+            <img src="{% static 'images/logo.png' %}" alt="MailConnect" width="140" height="32">
+        </div>
+
+        <!-- Login Card -->
+        <div class="card w-100" style="max-width: 400px;">
+            <div class="card-body">
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="h4 fw-semibold text-gray-900">Log in to your account</h1>
+                    </div>
+
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="space-y-2">
+                            <label for="username" class="form-label">Your email</label>
+                            <input 
+                                type="email" 
+                                name="username" 
+                                id="username" 
+                                class="form-control" 
+                                placeholder="E.g. nemo@mailconnect.com" 
+                                required
+                            >
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="position-relative">
+                                <input 
+                                    type="password" 
+                                    name="password" 
+                                    id="password" 
+                                    class="form-control pe-10" 
+                                    placeholder="Password..." 
+                                    required
+                                >
+                                <button 
+                                    type="button" 
+                                    class="password-toggle" 
+                                    id="togglePassword"
+                                >
+                                    <i class="fa-regular fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark w-100 btn-login" id="loginButton">
+                            <span class="button-text">Log in</span>
+                            <span class="button-loader d-none">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading...
+                            </span>
+                        </button>
+
+                        <div class="text-center">
+                            <a href="{% url 'password_reset' %}" class="text-decoration-none text-muted small">
+                                Forgot password?
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sign Up Link -->
+        <p class="mt-4 small text-muted">
+            Don't have an account? 
+            <a href="{% url 'signup' %}" class="text-decoration-none text-primary">Sign up</a>
+        </p>
+    </div>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle between eye and eye-slash icons
+            passwordIcon.classList.toggle('fa-eye');
+            passwordIcon.classList.toggle('fa-eye-slash');
+        });
+
+        // Add form submission handling
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const button = document.getElementById('loginButton');
+            const buttonText = button.querySelector('.button-text');
+            const buttonLoader = button.querySelector('.button-loader');
+            
+            // Show loading state
+            buttonText.classList.add('d-none');
+            buttonLoader.classList.remove('d-none');
+            button.disabled = true;
+
+            // Get form data
+            const formData = new FormData(form);
+            
+            // Submit form data via fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Wait remaining time (if any) before redirecting
+                    const remainingTime = Math.max(0, 10000 - (Date.now() - startTime));
+                    setTimeout(() => {
+                        window.location.href = '/dashboard/';
+                    }, remainingTime);
+                } else {
+                    throw new Error('Login failed');
+                }
+            })
+            .catch(error => {
+                // Reset button state
+                buttonText.classList.remove('d-none');
+                buttonLoader.classList.add('d-none');
+                button.disabled = false;
+                
+                // Show error message
+                alert('Login failed. Please check your credentials and try again.');
+            });
+        });
+    </script>
+</body>
+</html> 

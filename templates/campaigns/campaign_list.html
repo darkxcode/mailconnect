@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Campaign List{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Your Campaigns</h1>
+    <a href="{% url 'campaign_create' %}" class="btn btn-primary mb-3">Create New Campaign</a>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info" role="alert">
+                <strong>Tip:</strong> Use our templates to create effective campaigns quickly!
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for campaign in campaigns %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <img src="{% static 'images/campaign_placeholder.jpg' %}" class="card-img-top" alt="Campaign Image">
+                <div class="card-body">
+                    <h5 class="card-title">{{ campaign.name }}</h5>
+                    <p class="card-text">{{ campaign.subject }}</p>
+                    <p class="card-text"><small class="text-muted">Created on: {{ campaign.created_at|date:"M d, Y" }}</small></p>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'campaign_edit' campaign.id %}" class="btn btn-warning">Edit</a>
+                    <a href="{% url 'send_campaign' campaign.id %}" class="btn btn-success">Send Campaign</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col">
+            <div class="alert alert-info" role="alert">
+                No campaigns found. <a href="{% url 'campaign_create' %}" class="alert-link">Create your first campaign</a>.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-12 text-center">
+            <h2>Why Choose MailConnect?</h2>
+            <p>MailConnect offers a comprehensive solution for managing your email campaigns effectively.</p>
+            <a href="#" class="btn btn-primary">Learn More</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

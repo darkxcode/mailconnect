@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Test Campaign: {{ campaign.name }}</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Campaign Details</h5>
+            <p><strong>Subject:</strong> {{ campaign.subject }}</p>
+            <p><strong>Body:</strong></p>
+            <pre>{{ campaign.body }}</pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Send Test Email</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="test_email">Test Email Address:</label>
+                    <input type="email" class="form-control" id="test_email" name="test_email" required>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Send Test Email</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

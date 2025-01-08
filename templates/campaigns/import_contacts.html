@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Contacts{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Import Contacts</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="{{ form.csv_file.id_for_label }}" class="form-label">CSV File</label>
+            {{ form.csv_file }}
+        </div>
+        <button type="submit" class="btn btn-primary">Import</button>
+    </form>
+</div>
+{% endblock %}

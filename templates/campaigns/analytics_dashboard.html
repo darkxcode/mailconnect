@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+    .dashboard-card {
+        transition: transform 0.2s;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    .chart-container {
+        position: relative;
+        margin: auto;
+        height: 300px;
+    }
+    .table-container {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .performance-table th {
+        font-weight: 600;
+        color: #495057;
+    }
+    .trend-indicator {
+        font-size: 1rem;
+        margin-left: 0.5rem;
+    }
+    .trend-up { color: #198754; }
+    .trend-down { color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">Campaign Analytics</h2>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" data-range="7">7 Days</button>
+                <button class="btn btn-outline-primary active" data-range="30">30 Days</button>
+                <button class="btn btn-outline-primary" data-range="90">90 Days</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-primary bg-gradient text-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-subtitle mb-2 opacity-75">Total Campaigns</h6>
+                        <h2 class="card-title mb-0 display-4">{{ total_campaigns }}</h2>
+                    </div>
+                    <i class="material-icons stat-icon">campaign</i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-success bg-gradient text-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-subtitle mb-2 opacity-75">Active Campaigns</h6>
+                        <h2 class="card-title mb-0 display-4">{{ active_campaigns }}</h2>
+                    </div>
+                    <i class="material-icons stat-icon">rocket_launch</i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-info bg-gradient text-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-subtitle mb-2 opacity-75">Total Prospects</h6>
+                        <h2 class="card-title mb-0 display-4">{{ total_prospects }}</h2>
+                    </div>
+                    <i class="material-icons stat-icon">groups</i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card bg-warning bg-gradient text-white h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="card-subtitle mb-2 opacity-75">Open Rate</h6>
+                        <h2 class="card-title mb-0 display-4">
+                            {{ open_rate|floatformat:1 }}%
+                            <span class="trend-indicator">
+                                {% if open_rate > previous_open_rate %}
+                                <i class="material-icons trend-up">trending_up</i>
+                                {% else %}
+                                <i class="material-icons trend-down">trending_down</i>
+                                {% endif %}
+                            </span>
+                        </h2>
+                    </div>
+                    <i class="material-icons stat-icon">mail_outline</i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">Campaign Performance Trends</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">Engagement Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="timingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Performance Table -->
+    <div class="card dashboard-card">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Campaign Performance</h5>
+            <button class="btn btn-outline-primary btn-sm">
+                <i class="material-icons align-middle">file_download</i> Export
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover performance-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Campaign Name</th>
+                            <th class="text-center">Sent</th>
+                            <th class="text-center">Delivered</th>
+                            <th class="text-center">Opened</th>
+                            <th class="text-center">Clicked</th>
+                            <th class="text-center">Open Rate</th>
+                            <th class="text-center">Click Rate</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="material-icons text-muted me-2">campaign</i>
+                                    {{ campaign.name }}
+                                </div>
+                            </td>
+                            <td class="text-center">{{ campaign.analytics.total_sent }}</td>
+                            <td class="text-center">{{ campaign.analytics.total_delivered }}</td>
+                            <td class="text-center">{{ campaign.analytics.total_opened }}</td>
+                            <td class="text-center">{{ campaign.analytics.total_clicked }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-success">{{ campaign.analytics.open_rate|floatformat:1 }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ campaign.analytics.click_rate|floatformat:1 }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-{{ campaign.status|yesno:'success,secondary' }}">
+                                    {{ campaign.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+// Performance Chart Configuration
+const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+new Chart(performanceCtx, {
+    type: 'line',
+    data: {
+        labels: JSON.parse('{{ daily_stats.keys|safe|escapejs }}'),
+        datasets: [{
+            label: 'Sent',
+            data: JSON.parse('{{ daily_stats.values|map:"sent"|safe|escapejs }}'),
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Opened',
+            data: JSON.parse('{{ daily_stats.values|map:"opened"|safe|escapejs }}'),
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'Clicked',
+            data: JSON.parse('{{ daily_stats.values|map:"clicked"|safe|escapejs }}'),
+            borderColor: '#dc3545',
+            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    drawBorder: false
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Timing Chart Configuration
+const timingCtx = document.getElementById('timingChart').getContext('2d');
+new Chart(timingCtx, {
+    type: 'doughnut',
+    data: {
+        labels: JSON.parse('{{ best_times|map:"hour"|safe|escapejs }}'),
+        datasets: [{
+            data: JSON.parse('{{ best_times|map:"count"|safe|escapejs }}'),
+            backgroundColor: [
+                '#0d6efd',
+                '#198754',
+                '#dc3545',
+                '#ffc107',
+                '#0dcaf0'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Date range selector functionality
+document.querySelectorAll('[data-range]').forEach(button => {
+    button.addEventListener('click', function() {
+        document.querySelectorAll('[data-range]').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        // Add AJAX call to update data based on selected range
+    });
+});
+</script>
+{% endblock %} 
