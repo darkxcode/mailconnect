@@ -2,7 +2,11 @@ services:
   - type: web
     name: mailconnect
     env: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+      python manage.py createsuperuser --noinput
     startCommand: gunicorn core.wsgi:application
     envVars:
       - key: PYTHON_VERSION
@@ -17,6 +21,12 @@ services:
         value: false
       - key: ALLOWED_HOSTS
         value: mailconnect.onrender.com
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@mailconnect.com
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_PASSWORD
+        value: admin123
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_PORT
