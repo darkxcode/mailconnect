@@ -40,13 +40,10 @@ services:
         sync: false
       - key: CELERY_BROKER_URL
         value: redis://localhost:6379/0
+      - key: ENVIRONMENT
+        value: production
 
 databases:
   - name: mail_connect_db
     databaseName: mail_connect_db
     user: mail_connect_db_user 
-
-build:
-  steps:
-    - name: Create logs directory
-      command: mkdir -p logs 
