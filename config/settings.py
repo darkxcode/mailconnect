@@ -46,4 +46,4 @@ if ENVIRONMENT == 'development':
         'mode': 'a',
     }
     LOGGING['root']['handlers'].append('file')
-    LOGGING['loggers']['django']['handlers'].append('file') 
+    LOGGING['loggers']['django']['handlers'].append('file')
