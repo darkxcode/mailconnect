@@ -826,3 +826,7 @@ def send_campaign(request, campaign_id):
     return redirect('campaign_detail', campaign_id=campaign_id)
 
 # Add more views as needed for API endpoints
+
+def twenty_webhook(request):
+    # Your implementation here
+    return JsonResponse({'status': 'success'})

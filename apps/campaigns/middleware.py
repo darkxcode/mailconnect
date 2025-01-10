@@ -1,28 +1,38 @@
 from django.core.cache import cache
-from django.http import HttpResponseTooManyRequests
-import time
+from django.http import HttpResponse
+from django.conf import settings
 
-class EmailRateLimitMiddleware:
+class HttpResponseTooManyRequests(HttpResponse):
+    status_code = 429
+
+class RateLimitMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path.startswith('/send-campaign/'):
-            user_key = f'email_rate_limit_{request.user.id}'
-            current_time = time.time()
-            
-            # Get email sending history
-            history = cache.get(user_key, [])
-            
-            # Remove old entries
-            history = [t for t in history if t > current_time - 60]
-            
-            # Check rate limit
-            if len(history) >= settings.EMAIL_RATE_LIMIT['emails_per_minute']:
-                return HttpResponseTooManyRequests('Email rate limit exceeded')
-            
-            # Add current request
-            history.append(current_time)
-            cache.set(user_key, history, 60)
-        
-        return self.get_response(request) 
+        # Add rate limiting logic here if needed
+        response = self.get_response(request)
+        return response
+
+    def process_exception(self, request, exception):
+        if isinstance(exception, RateLimitExceeded):
+            return HttpResponseTooManyRequests("Too many requests. Please try again later.")
+        return None
+
+class RateLimitExceeded(Exception):
+    pass
+
+class HttpsRedirectMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Only redirect in production
+        if not settings.DEBUG and not request.is_secure():
+            return self.process_request(request)
+        return self.get_response(request)
+
+    def process_request(self, request):
+        if not request.is_secure():
+            return self.get_response(request)
+        return self.get_response(request)

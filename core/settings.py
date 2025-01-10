@@ -20,7 +20,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['mailconnect.onrender.com', 'localhost', '127.0.0.1']
 
@@ -51,7 +51,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.campaigns.middleware.EmailRateLimitMiddleware',
+    'apps.campaigns.middleware.RateLimitMiddleware',
+    'apps.campaigns.middleware.HttpsRedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -77,7 +78,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://mail_connect_db_user:ffI6tw35OcFH4oZDzvXVkzbUCuvjIjkm@dpg-ctvdomdds78s738sasu0-a/mail_connect_db',
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600
     )
 }
@@ -106,10 +107,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
@@ -196,11 +195,24 @@ LOGGING = {
 
 # Security settings
 if not DEBUG:
+    # Only enable these settings in production
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    # HSTS settings
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # Disable SSL/HTTPS settings in development
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_BROWSER_XSS_FILTER = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
     X_FRAME_OPTIONS = 'DENY'
 
 AUTH_USER_MODEL = 'campaigns.CustomUser'
@@ -218,20 +230,22 @@ EMAIL_RATE_LIMIT = {
 # Password Reset Settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour timeout for password reset links
 
-SITE_URL = 'http://localhost:8000'  # No trailing slash
-
-# HTTPS settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-# HSTS settings
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# Update SITE_URL based on DEBUG
+SITE_URL = 'https://mailconnect.onrender.com' if not DEBUG else 'http://localhost:8000'
 
 # Create custom error views
 handler404 = 'core.views.custom_404'
 handler500 = 'core.views.custom_500'
+
+SECURE_PROXY_SSL_HEADER = None
+if DEBUG:
+    SECURE_PROXY_SSL_HEADER = None
+    USE_X_FORWARDED_PROTO = False
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_BROWSER_XSS_FILTER = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_HSTS_SECONDS = 0
