@@ -32,13 +32,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
     'rest_framework',
     'corsheaders',
     'django_celery_beat',
     'django_celery_results',
-    'apps.campaigns',
-    'apps.email_manager',
-    'api_app',
+    # Local apps
+    'apps.campaigns.apps.CampaignsConfig',
+    'apps.email_manager.apps.EmailManagerConfig',
+    'api_app.apps.ApiAppConfig',
 ]
 
 MIDDLEWARE = [
