@@ -16,5 +16,7 @@ python manage.py collectstatic --no-input
 # Run migrations
 python manage.py migrate
 
-# Create superuser (if needed)
-python manage.py createsuperuser --noinput 
+# Check if superuser exists, if not create it
+if ! python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(username='admin').exists())"; then
+    python manage.py createsuperuser --noinput --username admin --email admin@mailconnect.com
+fi 
