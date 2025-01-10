@@ -157,6 +157,8 @@ REST_FRAMEWORK = {
 }
 
 # Logging configuration
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -167,31 +169,46 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
     },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'campaigns': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': True,
         },
     },
 }
+
+if ENVIRONMENT == 'development':
+    # Ensure logs directory exists
+    LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    
+    LOGGING['handlers']['file'] = {
+        'class': 'utils.logging.SafeFileHandler',
+        'filename': os.path.join(LOGS_DIR, 'django.log'),
+        'formatter': 'verbose',
+        'mode': 'a',
+        'maxBytes': 1024 * 1024 * 5,  # 5 MB
+        'backupCount': 5,
+    }
+    LOGGING['root']['handlers'].append('file')
+    LOGGING['loggers']['django']['handlers'].append('file')
+    LOGGING['loggers']['campaigns']['handlers'].append('file')
 
 # Security settings
 if not DEBUG:

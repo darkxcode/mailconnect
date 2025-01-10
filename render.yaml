@@ -2,7 +2,9 @@ services:
   - type: web
     name: mailconnect
     env: python
-    buildCommand: chmod +x build.sh && ./build.sh
+    buildCommand: |
+      mkdir -p logs
+      chmod +x build.sh && ./build.sh
     startCommand: gunicorn core.wsgi:application
     envVars:
       - key: PYTHON_VERSION
