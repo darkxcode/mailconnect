@@ -103,7 +103,7 @@
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();
             const form = this;
-            const button = document.getElementById('loginButton');
+            const button = form.querySelector('button[type="submit"]');
             const buttonText = button.querySelector('.button-text');
             const buttonLoader = button.querySelector('.button-loader');
             
@@ -120,18 +120,22 @@
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
             .then(response => {
-                if (response.ok) {
-                    // Wait remaining time (if any) before redirecting
-                    const remainingTime = Math.max(0, 10000 - (Date.now() - startTime));
-                    setTimeout(() => {
-                        window.location.href = '/dashboard/';
-                    }, remainingTime);
-                } else {
+                if (!response.ok) {
                     throw new Error('Login failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Redirect to dashboard
+                    window.location.href = data.redirect_url || '/dashboard/';
+                } else {
+                    throw new Error(data.errors || 'Login failed');
                 }
             })
             .catch(error => {
@@ -142,6 +146,7 @@
                 
                 // Show error message
                 alert('Login failed. Please check your credentials and try again.');
+                console.error('Error:', error);
             });
         });
     </script>

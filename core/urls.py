@@ -13,6 +13,7 @@ from apps.campaigns.views import (
 from django.contrib.auth import views as auth_views  # Add this import
 from rest_framework.routers import DefaultRouter
 from apps.campaigns import views
+from apps.campaigns.views import CustomLoginView
 
 router = DefaultRouter()
 router.register(r'contacts', ContactViewSet)
@@ -26,9 +27,9 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('email/', include('apps.email_manager.urls')),
     path('', home, name='home'),  # Add this line for the home view
-    path('accounts/login/', auth_views.LoginView.as_view(), name='login'),  # Add this line
-    path('accounts/signup/', signup, name='signup'),  # Ensure this line is correct
-    path('smtp_settings/', smtp_settings, name='smtp_settings'),  # Add this line
+    path('accounts/login/', CustomLoginView.as_view(), name='login'),
+    path('accounts/signup/', signup, name='signup'),
+    path('smtp_settings/', smtp_settings, name='smtp_settings'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('api/dashboard/stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
     path('campaigns/', views.campaign_list, name='campaigns'),

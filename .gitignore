@@ -35,6 +35,7 @@ staticfiles/
 # Environment variables
 .env
 .env.example
+.env copy
 .env.local
 .env.*.local
 

@@ -213,26 +213,23 @@ if ENVIRONMENT == 'development':
     LOGGING['loggers']['campaigns']['handlers'].append('file')
 
 # Security settings
+SECURE_SSL_REDIRECT = False  # Set to True in production
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Session and CSRF settings
+SESSION_COOKIE_SECURE = False  # Set to True in production
+CSRF_COOKIE_SECURE = False    # Set to True in production
+
+# HTTPS settings
 if not DEBUG:
-    # Only enable these settings in production
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-    # HSTS settings
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-else:
-    # Disable SSL/HTTPS settings in development
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_BROWSER_XSS_FILTER = False
-    SECURE_CONTENT_TYPE_NOSNIFF = False
-    X_FRAME_OPTIONS = 'DENY'
 
 AUTH_USER_MODEL = 'campaigns.CustomUser'
 
@@ -258,9 +255,9 @@ handler500 = 'core.views.custom_500'
 
 SECURE_PROXY_SSL_HEADER = None
 if DEBUG:
+    SECURE_SSL_REDIRECT = False
     SECURE_PROXY_SSL_HEADER = None
     USE_X_FORWARDED_PROTO = False
-    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
     SECURE_BROWSER_XSS_FILTER = False

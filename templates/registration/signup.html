@@ -128,7 +128,6 @@
             const button = document.getElementById('signupButton');
             const buttonText = button.querySelector('.button-text');
             const buttonLoader = button.querySelector('.button-loader');
-            const startTime = Date.now();
             
             // Show loading state
             buttonText.classList.add('d-none');
@@ -148,19 +147,17 @@
                 }
             })
             .then(response => {
-                if (response.ok) {
-                    return response.json();
+                if (!response.ok) {
+                    throw new Error('Signup failed');
                 }
-                return response.json().then(data => {
-                    throw new Error(Object.values(data.errors).flat().join('\n'));
-                });
+                return response.json();
             })
             .then(data => {
                 if (data.success) {
-                    const remainingTime = Math.max(0, 10000 - (Date.now() - startTime));
-                    setTimeout(() => {
-                        window.location.href = '/dashboard/';
-                    }, remainingTime);
+                    // Redirect to dashboard
+                    window.location.href = data.redirect_url || '/dashboard/';
+                } else {
+                    throw new Error(data.errors || 'Signup failed');
                 }
             })
             .catch(error => {
@@ -170,7 +167,8 @@
                 button.disabled = false;
                 
                 // Show error message
-                alert(error.message || 'Signup failed. Please try again.');
+                alert('Signup failed. Please try again.');
+                console.error('Error:', error);
             });
         });
     </script>

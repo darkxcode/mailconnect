@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 
 class HttpResponseTooManyRequests(HttpResponse):
@@ -27,12 +27,10 @@ class HttpsRedirectMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Only redirect in production
-        if not settings.DEBUG and not request.is_secure():
-            return self.process_request(request)
-        return self.get_response(request)
-
-    def process_request(self, request):
-        if not request.is_secure():
-            return self.get_response(request)
+        # If DEBUG is True, redirect HTTPS to HTTP
+        if settings.DEBUG and request.is_secure():
+            url = request.build_absolute_uri(request.get_full_path())
+            url = url.replace('https://', 'http://')
+            return HttpResponseRedirect(url)
+        
         return self.get_response(request)

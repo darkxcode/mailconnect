@@ -10,7 +10,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.views import View
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
@@ -25,6 +25,8 @@ from django.db.models import Count, Avg
 from PIL import Image
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models.functions import ExtractHour
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 
 from .models import (
     Campaign, 
@@ -63,15 +65,31 @@ from .services import BulkEmailService
 User = get_user_model()  # Get the custom user model
 
 # Ensure the signup function is defined here
+@require_http_methods(["GET", "POST"])
 def signup(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # Log the user in
             login(request, user)
-            return redirect('home')
+            
+            # Check if it's an AJAX request
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': reverse('dashboard')
+                })
+            return redirect('dashboard')
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False, 
+                    'errors': form.errors
+                }, status=400)
     else:
         form = CustomUserCreationForm()
+    
     return render(request, 'registration/signup.html', {'form': form})
 
 # Campaign Views
@@ -245,17 +263,26 @@ class SignUpView(View):
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
-
+    
     def form_valid(self, form):
         """Security check complete. Log the user in."""
         login(self.request, form.get_user())
         if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
+            return JsonResponse({
+                'success': True,
+                'redirect_url': self.get_success_url()
+            })
         return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse('dashboard')
 
     def form_invalid(self, form):
         if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            return JsonResponse({
+                'success': False, 
+                'errors': form.errors
+            }, status=400)
         return self.render_to_response(self.get_context_data(form=form))
 
 @login_required

@@ -3,9 +3,21 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Campaign, Contact, SMTPSettings, CustomUser, EmailTemplate, EmailCampaign
 
 class CustomUserCreationForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=True)
+    email = forms.EmailField(required=True)
+    company = forms.CharField(max_length=100, required=True)
+
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'password1', 'password2')
+        fields = ('first_name', 'email', 'company', 'password1', 'password2')
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = user.email  # Use email as username
+        user.company_name = self.cleaned_data['company']
+        if commit:
+            user.save()
+        return user
 
 class CampaignForm(forms.ModelForm):
     class Meta:
