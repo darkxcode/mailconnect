@@ -3,13 +3,49 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Campaign, Contact, SMTPSettings, CustomUser, EmailTemplate, EmailCampaign
 
 class CustomUserCreationForm(UserCreationForm):
-    first_name = forms.CharField(max_length=30, required=True)
-    email = forms.EmailField(required=True)
-    company = forms.CharField(max_length=100, required=True)
+    first_name = forms.CharField(
+        max_length=30, 
+        required=True,
+        error_messages={
+            'required': 'First name is required',
+            'max_length': 'First name must be less than 30 characters'
+        }
+    )
+    email = forms.EmailField(
+        required=True,
+        error_messages={
+            'required': 'Email is required',
+            'invalid': 'Please enter a valid email address'
+        }
+    )
+    company = forms.CharField(
+        max_length=100, 
+        required=True,
+        error_messages={
+            'required': 'Company name is required',
+            'max_length': 'Company name must be less than 100 characters'
+        }
+    )
 
     class Meta:
         model = CustomUser
         fields = ('first_name', 'email', 'company', 'password1', 'password2')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError('A user with this email already exists.')
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+
+        if password1 and password2 and password1 != password2:
+            self.add_error('password2', 'The two password fields must match.')
+
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -24,8 +60,13 @@ class CampaignForm(forms.ModelForm):
         model = Campaign
         fields = ['name', 'status']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter campaign name'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            })
         }
 
 class SMTPSettingsForm(forms.ModelForm):
@@ -75,3 +116,14 @@ class EmailCampaignForm(forms.ModelForm):
     class Meta:
         model = EmailCampaign
         fields = ['name', 'subject', 'body', 'smtp_settings']
+
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'email', 'company_name', 'phone_number']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+        }

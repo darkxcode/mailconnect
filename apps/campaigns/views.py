@@ -27,6 +27,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import ExtractHour
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.contrib.auth import logout as auth_logout
 
 from .models import (
     Campaign, 
@@ -49,7 +50,8 @@ from .forms import (
     EmailTemplateForm, 
     ContactForm,
     CustomUserCreationForm,
-    EmailCampaignForm
+    EmailCampaignForm,
+    ProfileUpdateForm
 )
 from .tasks import send_campaign_email
 from .serializers import (
@@ -95,33 +97,45 @@ def signup(request):
 # Campaign Views
 @login_required
 def campaign_list(request):
-    campaigns = Campaign.objects.filter(created_by=request.user)
+    campaigns = Campaign.objects.filter(created_by=request.user).order_by('-created_at')
     return render(request, 'campaigns/campaign_list.html', {'campaigns': campaigns})
 
 @login_required
 def campaign_create(request):
     if request.method == 'POST':
-        form = EmailCampaignForm(request.POST)
+        form = CampaignForm(request.POST)
         if form.is_valid():
             campaign = form.save(commit=False)
-            campaign.user = request.user
+            campaign.created_by = request.user
             campaign.save()
-            messages.success(request, 'Campaign created successfully!')
-            return redirect('campaign_test', campaign_id=campaign.id)
+            
+            # Create associated analytics
+            CampaignAnalytics.objects.create(campaign=campaign)
+            
+            messages.success(request, f'Campaign "{campaign.name}" was created successfully!')
+            return redirect('campaigns')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
-        form = EmailCampaignForm()
+        form = CampaignForm()
     
-    return render(request, 'campaigns/campaign_form.html', {'form': form})
+    return render(request, 'campaigns/campaign_form.html', {
+        'form': form,
+        'title': 'Create Campaign'
+    })
 
 @login_required
 def campaign_edit(request, pk):
     campaign = get_object_or_404(Campaign, pk=pk, created_by=request.user)
-    form = CampaignForm(request.POST or None, instance=campaign)
-    if form.is_valid():
-        form.save()
-        messages.success(request, 'Campaign updated successfully.')
-        return redirect('campaign_list')
-    return render(request, 'campaigns/campaign_form.html', {'form': form, 'campaign': campaign})
+    if request.method == 'POST':
+        form = CampaignForm(request.POST, instance=campaign)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Campaign updated successfully.')
+            return redirect('campaigns')
+    else:
+        form = CampaignForm(instance=campaign)
+    return render(request, 'campaigns/campaign_form.html', {'form': form})
 
 @login_required
 def campaign_send(request, pk):
@@ -419,6 +433,8 @@ class SMTPSettingsViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 def home(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     return render(request, 'home.html')
 
 class ContactViewSet(viewsets.ModelViewSet):
@@ -431,19 +447,38 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
 @login_required
 def dashboard(request):
-    # Get user's campaign statistics
-    active_campaigns = Campaign.objects.filter(
-        created_by=request.user,
-        status='active'
-    )
-    
-    context = {
-        'active_campaigns_count': active_campaigns.count(),
-        'total_prospects': Prospect.objects.filter(created_by=request.user).count(),
-        'open_rate': Campaign.objects.filter(created_by=request.user).aggregate(Avg('open_rate'))['open_rate__avg'] or 0,
-        'response_rate': Campaign.objects.filter(created_by=request.user).aggregate(Avg('response_rate'))['response_rate__avg'] or 0,
-        'recent_campaigns': Campaign.objects.filter(created_by=request.user).order_by('-last_active')[:5]
-    }
+    try:
+        # Get counts for the current user
+        active_campaigns = Campaign.objects.filter(
+            created_by=request.user,
+            status='active'
+        )
+        
+        total_prospects = Prospect.objects.filter(
+            created_by=request.user
+        ).count()
+        
+        # Get recent campaigns with their stats
+        recent_campaigns = Campaign.objects.filter(
+            created_by=request.user
+        ).order_by('-last_active')[:5]
+
+        context = {
+            'active_campaigns_count': active_campaigns.count(),
+            'total_prospects': total_prospects,
+            'open_rate': active_campaigns.aggregate(Avg('open_rate'))['open_rate__avg'] or 0,
+            'response_rate': active_campaigns.aggregate(Avg('response_rate'))['response_rate__avg'] or 0,
+            'recent_campaigns': recent_campaigns,
+        }
+    except Exception as e:
+        # Handle the case where tables don't exist yet
+        context = {
+            'active_campaigns_count': 0,
+            'total_prospects': 0,
+            'open_rate': 0,
+            'response_rate': 0,
+            'recent_campaigns': [],
+        }
     
     return render(request, 'dashboard.html', context)
 
@@ -660,18 +695,24 @@ def track_click(request, tracking_id):
 
 @login_required
 def prospect_list(request):
-    prospects = Prospect.objects.filter(created_by=request.user)
-    return render(request, 'campaigns/prospect_list.html', {'prospects': prospects})
+    prospects = Prospect.objects.filter(created_by=request.user).order_by('-created_at')
+    return render(request, 'prospects/prospect_list.html', {
+        'prospects': prospects
+    })
 
 @login_required
 def template_list(request):
-    templates = EmailTemplate.objects.filter(created_by=request.user)
-    return render(request, 'campaigns/template_list.html', {'templates': templates})
+    templates = EmailTemplate.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'templates/template_list.html', {
+        'templates': templates
+    })
 
 @login_required
 def report_list(request):
-    campaigns = Campaign.objects.filter(created_by=request.user)
-    return render(request, 'campaigns/report_list.html', {'campaigns': campaigns})
+    campaigns = Campaign.objects.filter(created_by=request.user).order_by('-created_at')
+    return render(request, 'reports/report_list.html', {
+        'campaigns': campaigns
+    })
 
 @login_required
 def prospect_create(request):
@@ -721,23 +762,25 @@ def template_create(request):
 
 @login_required
 def template_edit(request, pk):
-    template = get_object_or_404(EmailTemplate, pk=pk)
+    template = get_object_or_404(EmailTemplate, pk=pk, user=request.user)
     if request.method == 'POST':
         form = EmailTemplateForm(request.POST, instance=template)
         if form.is_valid():
             form.save()
-            return redirect('template_list')
+            messages.success(request, 'Template updated successfully.')
+            return redirect('templates')
     else:
         form = EmailTemplateForm(instance=template)
-    return render(request, 'campaigns/template_form.html', {'form': form})
+    return render(request, 'templates/template_form.html', {'form': form})
 
 @login_required
 def template_delete(request, pk):
-    template = get_object_or_404(EmailTemplate, pk=pk)
+    template = get_object_or_404(EmailTemplate, pk=pk, user=request.user)
     if request.method == 'POST':
         template.delete()
-        return redirect('template_list')
-    return render(request, 'campaigns/template_confirm_delete.html', {'template': template})
+        messages.success(request, 'Template deleted successfully.')
+        return redirect('templates')
+    return render(request, 'templates/template_confirm_delete.html', {'template': template})
 
 @login_required
 def campaign_test(request, campaign_id):
@@ -857,3 +900,83 @@ def send_campaign(request, campaign_id):
 def twenty_webhook(request):
     # Your implementation here
     return JsonResponse({'status': 'success'})
+
+@login_required
+def profile_view(request):
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated!')
+            return redirect('profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'registration/profile.html', {
+        'form': form
+    })
+
+@login_required
+def settings_view(request):
+    return render(request, 'settings.html')
+
+@login_required
+def logout_view(request):
+    auth_logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    return redirect('login')
+
+@login_required
+def campaign_detail(request, pk):
+    campaign = get_object_or_404(Campaign, pk=pk, created_by=request.user)
+    return render(request, 'campaigns/campaign_detail.html', {
+        'campaign': campaign,
+        'prospects_count': campaign.prospects_count,
+        'open_rate': campaign.open_rate,
+        'response_rate': campaign.response_rate,
+    })
+
+@login_required
+def smtp_settings_view(request):
+    try:
+        smtp_settings = SMTPSettings.objects.get(user=request.user)
+    except SMTPSettings.DoesNotExist:
+        smtp_settings = None
+        
+    if request.method == 'POST':
+        form = SMTPSettingsForm(request.POST, instance=smtp_settings)
+        if form.is_valid():
+            smtp = form.save(commit=False)
+            smtp.user = request.user
+            smtp.save()
+            messages.success(request, 'SMTP settings updated successfully.')
+            return redirect('smtp_settings')
+    else:
+        form = SMTPSettingsForm(instance=smtp_settings)
+    
+    return render(request, 'settings/smtp_settings.html', {
+        'form': form,
+        'smtp_settings': smtp_settings
+    })
+
+def book_call_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Here you would typically:
+            # 1. Save the booking to your database
+            # 2. Send confirmation emails
+            # 3. Integrate with your calendar system
+            
+            # For now, we'll just return success
+            return JsonResponse({
+                'success': True,
+                'message': 'Demo scheduled successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+            
+    return render(request, 'book_call.html')

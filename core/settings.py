@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.campaigns.middleware.RateLimitMiddleware',
     'apps.campaigns.middleware.HttpsRedirectMiddleware',
+    'apps.campaigns.middleware.AuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -234,7 +235,7 @@ if not DEBUG:
 AUTH_USER_MODEL = 'campaigns.CustomUser'
 
 # Authentication settings
-LOGIN_REDIRECT_URL = 'campaign_list'
+LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 # Email rate limiting
@@ -265,3 +266,12 @@ if DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
     SECURE_HSTS_SECONDS = 0
+
+# Auth Settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Session Settings
+SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

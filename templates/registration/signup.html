@@ -26,16 +26,23 @@
 
                     <form method="post" class="space-y-4">
                         {% csrf_token %}
+                        
                         <div class="space-y-2">
                             <label for="first_name" class="form-label">First name</label>
                             <input 
                                 type="text" 
                                 name="first_name" 
                                 id="first_name" 
-                                class="form-control" 
+                                class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
                                 placeholder="E.g. Nemo" 
                                 required
+                                value="{{ form.first_name.value|default:'' }}"
                             >
+                            {% if form.first_name.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.first_name.errors|join:", " }}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="space-y-2">
@@ -44,10 +51,16 @@
                                 type="text" 
                                 name="company" 
                                 id="company" 
-                                class="form-control" 
+                                class="form-control {% if form.company.errors %}is-invalid{% endif %}" 
                                 placeholder="E.g. MailConnect" 
                                 required
+                                value="{{ form.company.value|default:'' }}"
                             >
+                            {% if form.company.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.company.errors|join:", " }}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="space-y-2">
@@ -56,32 +69,75 @@
                                 type="email" 
                                 name="email" 
                                 id="email" 
-                                class="form-control" 
+                                class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
                                 placeholder="nemo@mailconnect.com" 
                                 required
+                                value="{{ form.email.value|default:'' }}"
                             >
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="space-y-2">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password1" class="form-label">Password</label>
                             <div class="position-relative">
                                 <input 
                                     type="password" 
-                                    name="password" 
-                                    id="password" 
-                                    class="form-control pe-10" 
+                                    name="password1" 
+                                    id="password1" 
+                                    class="form-control pe-10 {% if form.password1.errors %}is-invalid{% endif %}" 
                                     placeholder="Choose password..." 
                                     required
                                 >
                                 <button 
                                     type="button" 
                                     class="password-toggle" 
-                                    id="togglePassword"
+                                    onclick="togglePasswordVisibility('password1')"
                                 >
-                                    <i class="fa-regular fa-eye" id="passwordIcon"></i>
+                                    <i class="fa-regular fa-eye" id="password1Icon"></i>
                                 </button>
                             </div>
+                            {% if form.password1.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.password1.errors|join:", " }}
+                            </div>
+                            {% endif %}
                         </div>
+
+                        <div class="space-y-2">
+                            <label for="password2" class="form-label">Confirm Password</label>
+                            <div class="position-relative">
+                                <input 
+                                    type="password" 
+                                    name="password2" 
+                                    id="password2" 
+                                    class="form-control pe-10 {% if form.password2.errors %}is-invalid{% endif %}" 
+                                    placeholder="Confirm password..." 
+                                    required
+                                >
+                                <button 
+                                    type="button" 
+                                    class="password-toggle" 
+                                    onclick="togglePasswordVisibility('password2')"
+                                >
+                                    <i class="fa-regular fa-eye" id="password2Icon"></i>
+                                </button>
+                            </div>
+                            {% if form.password2.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.password2.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors|join:", " }}
+                        </div>
+                        {% endif %}
 
                         <button type="submit" class="btn btn-dark w-100 btn-login" id="signupButton">
                             <span class="button-text">Sign up</span>
@@ -109,18 +165,17 @@
     </div>
 
     <script>
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const passwordIcon = document.getElementById('passwordIcon');
-
-        togglePassword.addEventListener('click', function() {
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const passwordIcon = document.getElementById(inputId + 'Icon');
+            
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             
             // Toggle between eye and eye-slash icons
             passwordIcon.classList.toggle('fa-eye');
             passwordIcon.classList.toggle('fa-eye-slash');
-        });
+        }
 
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -146,18 +201,30 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Signup failed');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Redirect to dashboard
                     window.location.href = data.redirect_url || '/dashboard/';
                 } else {
-                    throw new Error(data.errors || 'Signup failed');
+                    // Display validation errors
+                    Object.keys(data.errors).forEach(field => {
+                        const input = document.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            const feedbackDiv = input.parentElement.querySelector('.invalid-feedback') 
+                                || document.createElement('div');
+                            feedbackDiv.className = 'invalid-feedback';
+                            feedbackDiv.textContent = data.errors[field].join(', ');
+                            if (!input.parentElement.querySelector('.invalid-feedback')) {
+                                input.parentElement.appendChild(feedbackDiv);
+                            }
+                        }
+                    });
+                    
+                    // Reset button state
+                    buttonText.classList.remove('d-none');
+                    buttonLoader.classList.add('d-none');
+                    button.disabled = false;
                 }
             })
             .catch(error => {

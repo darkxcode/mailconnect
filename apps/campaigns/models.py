@@ -58,33 +58,46 @@ class Contact(models.Model):
         ordering = ['-created_at']
 
 class EmailTemplate(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=200)
     subject = models.CharField(max_length=200)
     content = models.TextField()
-    variables = models.JSONField(default=dict)
+    body = models.TextField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='email_templates'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['-created_at']
+
 class Campaign(models.Model):
-    STATUS_CHOICES = [
+    name = models.CharField(max_length=200)
+    status = models.CharField(max_length=20, choices=[
         ('draft', 'Draft'),
         ('active', 'Active'),
         ('paused', 'Paused'),
-        ('completed', 'Completed'),
-    ]
-
-    name = models.CharField(max_length=200)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+        ('completed', 'Completed')
+    ], default='draft')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='campaigns'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     last_active = models.DateTimeField(auto_now=True)
     prospects_count = models.IntegerField(default=0)
     open_rate = models.FloatField(default=0)
     response_rate = models.FloatField(default=0)
+
+    def __str__(self):
+        return self.name
 
     @property
     def status_color(self):
@@ -95,20 +108,44 @@ class Campaign(models.Model):
             'completed': 'info'
         }.get(self.status, 'secondary')
 
+    class Meta:
+        ordering = ['-created_at']
+
 class Prospect(models.Model):
     email = models.EmailField()
     name = models.CharField(max_length=200)
     company = models.CharField(max_length=200, blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='prospects'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['email', 'created_by']
 
 class CampaignAnalytics(models.Model):
     campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE, related_name='analytics')
-    total_sent = models.IntegerField(default=0)
-    total_opened = models.IntegerField(default=0)
-    total_clicked = models.IntegerField(default=0)
-    total_replied = models.IntegerField(default=0)
+    sent_count = models.IntegerField(default=0)
+    opened_count = models.IntegerField(default=0)
+    clicked_count = models.IntegerField(default=0)
+    replied_count = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
+
+    def update_rates(self):
+        if self.sent_count > 0:
+            self.campaign.open_rate = (self.opened_count / self.sent_count) * 100
+            self.campaign.response_rate = (self.replied_count / self.sent_count) * 100
+            self.campaign.save()
+
+    def __str__(self):
+        return f"Analytics for {self.campaign.name}"
 
 class CampaignContact(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
@@ -151,6 +188,8 @@ class EmailCampaign(models.Model):
     scheduled_time = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    opened = models.BooleanField(default=False)
+    responded = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

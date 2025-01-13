@@ -1,18 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <title>Settings</title>
-</head>
-<body>
-    <div class="container">
-        <h1>Settings</h1>
-        <!-- Add settings fields here -->
+{% extends 'base_authenticated.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Account Settings</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Add your settings form here -->
+                    <p class="text-muted">Settings page content will go here.</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <script>
-        // Add JavaScript for settings functionality
-    </script>
-</body>
-</html> 
+</div>
+{% endblock %} 

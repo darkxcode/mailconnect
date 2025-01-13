@@ -1,27 +1,75 @@
-{% extends 'base.html' %}
+{% extends 'base_authenticated.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Create Campaign</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="id_name">Campaign Name:</label>
-            {{ form.name }}
-        </div>
-        <div class="form-group">
-            <label for="id_subject">Email Subject:</label>
-            {{ form.subject }}
-        </div>
-        <div class="form-group">
-            <label for="id_body">Email Body:</label>
-            {{ form.body }}
-        </div>
-        <div class="form-group">
-            <label for="id_smtp_settings">SMTP Settings:</label>
-            {{ form.smtp_settings }}
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Create Campaign</button>
-    </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ title|default:"Create Campaign" }}</h1>
+    <a href="{% url 'campaigns' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>
+        Back to Campaigns
+    </a>
 </div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">Campaign Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.status.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'campaigns' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Campaign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
 {% endblock %}

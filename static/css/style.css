@@ -382,3 +382,54 @@ body {
     width: 1rem;
     height: 1rem;
 }
+
+.sidebar {
+    width: 250px;
+    min-height: calc(100vh - 60px);
+    position: fixed;
+    left: 0;
+    padding: 1rem;
+}
+
+.sidebar-sticky {
+    position: sticky;
+    top: 1rem;
+}
+
+.main-content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+}
+
+.nav-link {
+    color: #333;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link:hover {
+    background-color: #f8f9fa;
+}
+
+.nav-link.active {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-item form {
+    margin: 0;
+}
+
+.btn-link.text-danger {
+    text-decoration: none;
+}
+
+.btn-link.text-danger:hover {
+    color: #dc3545 !important;
+    text-decoration: none;
+}

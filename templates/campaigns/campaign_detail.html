@@ -1,0 +1,98 @@
+{% extends 'base_authenticated.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">{{ campaign.name }}</h1>
+        <p class="text-muted">Campaign Details</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'campaign_edit' campaign.pk %}" class="btn btn-outline-primary">
+            <i class="fas fa-edit me-2"></i>
+            Edit Campaign
+        </a>
+        <a href="{% url 'campaigns' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Campaigns
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Status</h6>
+                <span class="badge bg-{{ campaign.status_color }}">
+                    {{ campaign.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Prospects</h6>
+                <h2 class="card-title mb-0">{{ prospects_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Performance</h6>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <small class="text-muted">Open Rate</small>
+                        <h5 class="mb-0">{{ open_rate|floatformat:1 }}%</h5>
+                    </div>
+                    <div>
+                        <small class="text-muted">Response Rate</small>
+                        <h5 class="mb-0">{{ response_rate|floatformat:1 }}%</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Campaign Analytics</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th>Created</th>
+                    <td>{{ campaign.created_at|date:"M d, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Last Active</th>
+                    <td>{{ campaign.last_active|date:"M d, Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>
+                        <span class="badge bg-{{ campaign.status_color }}">
+                            {{ campaign.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Total Prospects</th>
+                    <td>{{ prospects_count }}</td>
+                </tr>
+                <tr>
+                    <th>Open Rate</th>
+                    <td>{{ open_rate|floatformat:1 }}%</td>
+                </tr>
+                <tr>
+                    <th>Response Rate</th>
+                    <td>{{ response_rate|floatformat:1 }}%</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

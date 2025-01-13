@@ -1,177 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MailConnect</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-</head>
-<body class="bg-light">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom fixed-top">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
-                <img src="{% static 'images/logo.png' %}" alt="MailConnect" width="140" height="32">
-            </a>
-            
-            <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-link text-dark dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle fa-lg"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                        <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% extends 'base_authenticated.html' %}
 
-    <!-- Sidebar and Main Content -->
-    <div class="d-flex" style="margin-top: 60px;">
-        <!-- Sidebar -->
-        <div class="sidebar bg-white border-end">
-            <div class="sidebar-sticky">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'dashboard' %}">
-                            <i class="fas fa-home me-2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'campaigns' %}">
-                            <i class="fas fa-envelope me-2"></i>
-                            Campaigns
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'prospects' %}">
-                            <i class="fas fa-users me-2"></i>
-                            Prospects
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'templates' %}">
-                            <i class="fas fa-file-alt me-2"></i>
-                            Templates
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'reports' %}">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Reports
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+{% block content %}
+<!-- Welcome Section -->
+<div class="mb-4">
+    <h1 class="h3">Welcome, {{ request.user.first_name }}! 👋</h1>
+    <p class="text-muted">Here's what's happening with your campaigns</p>
+</div>
 
-        <!-- Main Content -->
-        <div class="main-content p-4">
-            <!-- Welcome Section -->
-            <div class="mb-4">
-                <h1 class="h3">Welcome, {{ request.user.first_name }}! 👋</h1>
-                <p class="text-muted">Here's what's happening with your campaigns</p>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Active Campaigns</h6>
-                            <h2 class="card-title mb-0">{{ active_campaigns_count }}</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Total Prospects</h6>
-                            <h2 class="card-title mb-0">{{ total_prospects }}</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Open Rate</h6>
-                            <h2 class="card-title mb-0">{{ open_rate }}%</h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Response Rate</h6>
-                            <h2 class="card-title mb-0">{{ response_rate }}%</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Campaigns -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Recent Campaigns</h5>
-                    <a href="{% url 'campaigns' %}" class="btn btn-sm btn-primary">View All</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Campaign Name</th>
-                                    <th>Status</th>
-                                    <th>Prospects</th>
-                                    <th>Open Rate</th>
-                                    <th>Response Rate</th>
-                                    <th>Last Active</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for campaign in recent_campaigns %}
-                                <tr>
-                                    <td>{{ campaign.name }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ campaign.status_color }}">
-                                            {{ campaign.status }}
-                                        </span>
-                                    </td>
-                                    <td>{{ campaign.prospects_count }}</td>
-                                    <td>{{ campaign.open_rate }}%</td>
-                                    <td>{{ campaign.response_rate }}%</td>
-                                    <td>{{ campaign.last_active|date:"M d, Y" }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">
-                                        <p class="mb-0 text-muted">No campaigns yet</p>
-                                        <a href="{% url 'campaign_create' %}" class="btn btn-primary mt-2">
-                                            Create Your First Campaign
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Active Campaigns</h6>
+                <h2 class="card-title mb-0">{{ active_campaigns_count }}</h2>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Prospects</h6>
+                <h2 class="card-title mb-0">{{ total_prospects }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Open Rate</h6>
+                <h2 class="card-title mb-0">{{ open_rate|floatformat:1 }}%</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Response Rate</h6>
+                <h2 class="card-title mb-0">{{ response_rate|floatformat:1 }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'js/dashboard.js' %}"></script>
-</body>
-</html> 
+<!-- Recent Campaigns -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Campaigns</h5>
+        <a href="{% url 'campaigns' %}" class="btn btn-sm btn-primary">View All</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Campaign Name</th>
+                        <th>Status</th>
+                        <th>Prospects</th>
+                        <th>Open Rate</th>
+                        <th>Response Rate</th>
+                        <th>Last Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in recent_campaigns %}
+                    <tr>
+                        <td>{{ campaign.name }}</td>
+                        <td>
+                            <span class="badge bg-{{ campaign.status_color }}">
+                                {{ campaign.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ campaign.prospects_count }}</td>
+                        <td>{{ campaign.open_rate|floatformat:1 }}%</td>
+                        <td>{{ campaign.response_rate|floatformat:1 }}%</td>
+                        <td>{{ campaign.last_active|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <p class="mb-0 text-muted">No campaigns yet</p>
+                            <a href="{% url 'campaign_create' %}" class="btn btn-primary mt-2">
+                                Create Your First Campaign
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

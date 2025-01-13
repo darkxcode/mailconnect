@@ -1,14 +1,20 @@
-{% extends 'base.html' %}
-
-{% block title %}Home{% endblock %}
+{% extends "base.html" %}
 
 {% block content %}
-    <h1>Welcome to MailConnect!</h1>
-    <p>This is the home page of your email campaign management application.</p>
-    <a href="{% url 'campaign_list' %}">Manage Campaigns</a>
-    <a href="{% url 'smtp_settings' %}">Configure SMTP Settings</a>
-    <br>
-    <h2>User Authentication</h2>
-    <a href="{% url 'signup' %}">Sign Up</a> | 
-    <a href="{% url 'login' %}">Sign In</a>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Welcome to MailConnect</h1>
+            <p class="lead mb-4">Your all-in-one email campaign management solution</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% else %}
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 gap-3">Login</a>
+                    <a href="{% url 'signup' %}" class="btn btn-outline-primary btn-lg px-4">Sign Up</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
